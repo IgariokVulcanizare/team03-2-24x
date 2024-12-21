@@ -104,4 +104,4 @@ average = 0
 for idx in range(len(combined_scores)):
     average += combined_scores[idx][1]
 
-#return combined_scores, average
+#return combined_scores, average]

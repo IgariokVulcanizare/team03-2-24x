@@ -168,8 +168,8 @@ def main():
         # Build the fluent route string with arrows
         route_parts = []
         for idx in path_indices:
-            if 'Name' in kids.columns:
-                name = kids.loc[idx, 'Name']
+            if 'Child_ID' in kids.columns:
+                name = kids.loc[idx, 'Child_ID']
             else:
                 name = f"Kid {path_ids[idx]}"
             lat = kids.loc[idx, 'Latitude']

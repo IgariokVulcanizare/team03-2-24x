@@ -4,7 +4,11 @@ import csv
 from nltk.tokenize import word_tokenize
 import pandas as pd
 import logging
-
+from collections import defaultdict
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk import NaiveBayesClassifier
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 

@@ -88,7 +88,7 @@ def haversine(lat1, lon1, lat2, lon2):
     lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
     dlat = lat2 - lat1
     dlon = lon2 - lon1
-    a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+    a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
 
@@ -110,7 +110,6 @@ def solve_tsp_greedy(distance_matrix, start_index):
     path = [start_index]
     visited[start_index] = True
     total_distance = 0
-
     for _ in range(n - 1):
         last = path[-1]
         nearest = -1
@@ -120,7 +119,6 @@ def solve_tsp_greedy(distance_matrix, start_index):
                 nearest = i
                 min_distance = distance_matrix[last][i]
         if nearest == -1:
-            # No unvisited nodes left
             break
         path.append(nearest)
         visited[nearest] = True
@@ -153,7 +151,7 @@ def main():
             return
 
         distance_matrix = build_distance_matrix(locations)
-        
+
         # Choose the starting point as the easternmost location (highest longitude)
         easternmost_index = max(range(len(locations)), key=lambda i: locations[i][1])
         path_indices, total_distance = solve_tsp_greedy(distance_matrix, easternmost_index)
@@ -162,21 +160,20 @@ def main():
         if 'ID' in kids.columns:
             path_ids = kids.loc[path_indices, 'ID'].tolist()
         else:
-            # If no 'ID', use the index
             path_ids = path_indices
 
-        # Build the fluent route string with arrows
+        # Build the route string with arrows
         route_parts = []
         for idx in path_indices:
             if 'Child_ID' in kids.columns:
                 name = kids.loc[idx, 'Child_ID']
             else:
-                name = f"Kid {path_ids[idx]}"
+                name = f"Kid {idx}"
             lat = kids.loc[idx, 'Latitude']
             lon = kids.loc[idx, 'Longitude']
             route_parts.append(f"{name} (Lat: {lat:.6f}, Lon: {lon:.6f})")
-        
-        route_str = " → ".join(route_parts)
+
+        route_str = " \u2192 ".join(route_parts)
 
         print(f"\n{group_name} Kids Route:")
         print(f"Total Distance: {total_distance:.2f} km")
@@ -188,6 +185,6 @@ def main():
 
     # Process Bad Kids
     process_kids(bad_kids, "Bad")
- 
+
 if __name__ == "__main__":
     main()

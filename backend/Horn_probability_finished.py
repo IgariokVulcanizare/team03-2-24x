@@ -7,7 +7,7 @@ from collections import defaultdict
 # Read data from CSV
 kids = []
 countries = []
-with open("C:\\Users\\Nikita\\Downloads\\santas_logistics.csv", 'r', encoding='utf-8') as file:
+with open("santa.csv", 'r', encoding='utf-8') as file:
     csv_reader = csv.reader(file)
     header = next(csv_reader)
     for row in csv_reader:
@@ -68,6 +68,6 @@ for idx, horn_diameter in enumerate(horn_sizes):
 
 for horn_id, horn_diameter, probability in fit_probabilities:
     if probability < 0.6:
-        print(f"For the {kids[horn_id]}'s house Rudolph is suggesting Santa skip the cookies here...")
+        print(f"For {kids[horn_id]}'s house Rudolph is suggesting Santa skip the cookies here...")
     else:
-        print("You can entry safely")
+        print("You can enter safely")

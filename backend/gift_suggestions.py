@@ -1,74 +1,63 @@
-# gift_suggestions.py
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import pandas as pd
 import openai
-from experiments import main as experiments_main
-from dotenv import load_dotenv
-import os
-import logging
-import uvicorn
+from Experiments import final_result  # Importing the rating calculation results
 
-# Load environment variables from .env file
-load_dotenv()
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
-
-app = FastAPI(
-    title="Gift Suggestions API",
-    description="Processes children's ratings and provides corrective gift suggestions for those below average.",
-    version="1.0.0"
-)
+app = FastAPI()
 
 # Load the dataset
 DATASET_PATH = "santa.csv"
-try:
-    df = pd.read_csv(DATASET_PATH)
-    if "Child_ID" not in df.columns:
-        logging.error("Child_ID column not found in the dataset.")
-        raise Exception("Child_ID column not found in the dataset.")
-    df.set_index("Child_ID", inplace=True)  # Set Child_ID as the index for faster lookups
-except FileNotFoundError:
-    logging.error(f"Dataset not found at {DATASET_PATH}. Please ensure the file exists.")
-    raise Exception(f"Dataset not found at {DATASET_PATH}. Please ensure the file exists.")
-except Exception as e:
-    logging.error(str(e))
-    raise
+df = pd.read_csv(DATASET_PATH)
 
-# Set up OpenAI API key securely
-openai.api_key = os.getenv("OPENAI_API_KEY")
-if not openai.api_key:
-    logging.error("OpenAI API key not found. Please set it in the .env file.")
-    raise Exception("OpenAI API key not found. Please set it in the .env file.")
+# Clean the dataset and handle missing values
+def clean_dataset(df):
+    # Fill missing values for numeric columns with a default value or the column's mean
+    if "School_Grades" in df.columns:
+        df["School_Grades"] = pd.to_numeric(df["School_Grades"], errors="coerce")
+        df["School_Grades"] = df["School_Grades"].fillna(df["School_Grades"].mean())
 
-# Define a Pydantic model for the child
+    if "Listened_To_Parents" in df.columns:
+        df["Listened_To_Parents"] = pd.to_numeric(df["Listened_To_Parents"], errors="coerce")
+        df["Listened_To_Parents"] = df["Listened_To_Parents"].fillna(0.5)  # Default to neutral likelihood
+
+    # Ensure text columns are strings and replace NaNs with an empty string
+    text_columns = ["Good_Deed", "Bad_Deed"]
+    for col in text_columns:
+        if col in df.columns:
+            df[col] = df[col].astype(str).fillna("")
+
+    return df
+
+# Clean the dataset
+df = clean_dataset(df)
+
+# Set up OpenAI API key
+openai.api_key = "YOUR_OPENAI_API_KEY"  # Replace with your OpenAI API key
+
+# Define a Pydantic model for input validation
 class Child(BaseModel):
     id: int
     name: str
     rating: float
-    average_rating: float
     bad_deed: str
-    gift_suggestions: list
 
+# Function to generate gift suggestions using OpenAI's GPT API
 def fetch_gift_suggestions(child_id: int, bad_deed: str):
     """
     Use OpenAI's GPT API to generate gift suggestions dynamically based on the bad deed.
-    
-    Args:
-        child_id (int): The ID of the child.
-        bad_deed (str): The bad deed of the child.
-        
-    Returns:
-        list: A list of gift suggestions.
     """
     try:
+        # Ensure bad_deed is a string
+        if not isinstance(bad_deed, str) or bad_deed.strip() == "":
+            return ["No bad deed specified. Default suggestion: Be kind!"]
+
         # Generate a prompt for GPT
-        prompt = f"Generate corrective gift suggestions for the following bad deed by child ID {child_id}: {bad_deed}."
+        prompt = f"Generate a gift suggestion to correct the following deed for child ID {child_id}: {bad_deed}."
 
         # Call the OpenAI API
         response = openai.ChatCompletion.create(
-            model="gpt-4",  # Corrected model name
+            model="gpt-3.5-turbo",  # or "gpt-4" if available
             messages=[
                 {"role": "system", "content": "You are a helpful assistant for generating gift ideas."},
                 {"role": "user", "content": prompt}
@@ -79,78 +68,66 @@ def fetch_gift_suggestions(child_id: int, bad_deed: str):
 
         # Parse and return the response
         suggestions = response.choices[0].message.content.strip()
-        # Split suggestions by line breaks and remove any leading bullet points or spaces
-        return [s.strip("- ").strip() for s in suggestions.split("\n") if s.strip()]
-    
-    except openai.error.OpenAIError as e:
-        logging.error(f"OpenAI API error: {e}")
+        return suggestions.split("\n")  # Return suggestions as a list
+
+    except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching suggestions: {e}")
 
-@app.get("/process-children", response_model=list[Child], summary="Process children ratings and provide gift suggestions for those below average.")
+@app.get("/process-children")
 def process_children():
     """
     Processes all children in the dataset, compares their ratings, and generates gift suggestions for those
     below the average rating and with a bad deed.
-    
-    Returns:
-        list[Child]: A list of children with their details and gift suggestions.
     """
-    # Get the final results from experiments.py
-    try:
-        combined_scores, average_rating = experiments_main()
-    except Exception as e:
-        logging.error(f"Error fetching ratings: {e}")
-        raise HTTPException(status_code=500, detail=f"Error fetching ratings: {e}")
+    # Extract ratings and average from Experiments.py
+    combined_scores, average_rating = final_result  # Extract combined scores and the average rating
 
     results = []
 
     for child in combined_scores:
         child_id = child[0]  # Extract child ID
-        rating = child[1]    # Extract rating
+        rating = child[1]  # Extract rating
 
         if rating >= average_rating:
             continue  # Skip if the rating is above or equal to the average
 
-        try:
-            child_row = df.loc[child_id]
-        except KeyError:
-            logging.warning(f"Child ID {child_id} not found in the dataset. Skipping.")
-            continue
+        # Get the child's information from the dataset
+        child_row = df.loc[df["Child_ID"] == child_id]
+        if child_row.empty:
+            continue  # Skip if the child ID is not found in the dataset
 
-        name = child_row.get("Name", "Unknown")
-        bad_deed = child_row.get("Bad_Deed", "").strip()
+        name = child_row["Name"].values[0]
+        bad_deed = child_row["Bad_Deed"].values[0]
 
-        if not bad_deed:
-            logging.info(f"Child ID {child_id} has no bad deed specified. Skipping.")
+        if pd.isna(bad_deed) or not bad_deed.strip():
+            print(f"Child ID {child_id} has no bad deed specified. Skipping.")
             continue  # Skip if there is no bad deed specified
 
         # Fetch suggestions dynamically based on the bad deed
-        try:
-            suggestions = fetch_gift_suggestions(child_id, bad_deed)
-        except HTTPException as e:
-            logging.error(f"Error generating suggestions for Child ID {child_id}: {e.detail}")
-            continue
+        suggestions = fetch_gift_suggestions(child_id, bad_deed)
 
-        # Create a Child instance
-        child_result = Child(
-            id=child_id,
-            name=name,
-            rating=rating,
-            average_rating=average_rating,
-            bad_deed=bad_deed,
-            gift_suggestions=suggestions
-        )
+        # Store result in a dictionary
+        child_result = {
+            "id": child_id,
+            "name": name,
+            "rating": rating,
+            "average_rating": average_rating,
+            "bad_deed": bad_deed,
+            "gift_suggestions": suggestions
+        }
         results.append(child_result)
 
-        # Log results
-        logging.info(f"Processed Child ID {child_id}: {name}")
-        logging.info(f"Rating: {rating} | Average Rating: {average_rating}")
-        logging.info(f"Bad Deed: {bad_deed}")
-        logging.info(f"Gift Suggestions: {', '.join(suggestions)}")
-        logging.info("-" * 50)
+        # Print results to the terminal
+        print("Processing Child:")
+        print(f"ID: {child_result['id']}, Name: {child_result['name']}, Rating: {child_result['rating']}, Average Rating: {child_result['average_rating']}")
+        print(f"Bad Deed: {child_result['bad_deed']}")
+        print("Gift Suggestions:")
+        for suggestion in child_result['gift_suggestions']:
+            print(f"  - {suggestion}")
+        print("-" * 50)
 
     return results
 
 if __name__ == "__main__":
-    # Run the FastAPI app using Uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Directly process children and print results to the terminal
+    process_children()

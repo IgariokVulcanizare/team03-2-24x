@@ -1,10 +1,24 @@
 import csv
 import math
+import os
+import sys
 from nltk.tokenize import word_tokenize
 import pandas as pd
+import nltk
+
+# Ensure NLTK data is downloaded
+nltk_packages = ['punkt']
+for package in nltk_packages:
+    try:
+        nltk.data.find(f'tokenizers/{package}')
+    except LookupError:
+        nltk.download(package)
 
 # Load AFINN sentiment scores
 def load_afinn(file_path):
+    if not os.path.exists(file_path):
+        print(f"AFINN file not found at path: {file_path}")
+        sys.exit(1)
     afinn = {}
     with open(file_path, 'r', encoding='utf-8') as f:
         for line in f:
@@ -12,13 +26,22 @@ def load_afinn(file_path):
             afinn[word] = int(score)
     return afinn
 
+# Compute sentiment score for a given text
 def compute_action_score(text, afinn):
     tokens = word_tokenize(str(text).lower())
     return sum(afinn.get(token, 0) for token in tokens)
 
-# Load coordinates and other data from CSV
+# Load data from CSV
 def load_data(file_path):
+    if not os.path.exists(file_path):
+        print(f"Data file not found at path: {file_path}")
+        sys.exit(1)
     data = pd.read_csv(file_path)
+    expected_columns = {'Latitude', 'Longitude', 'Good_Deed', 'Bad_Deed', 'School_Grades', 'Listened_To_Parents'}
+    if not expected_columns.issubset(set(data.columns)):
+        missing = expected_columns - set(data.columns)
+        print(f"Missing columns in data: {missing}")
+        sys.exit(1)
     return data
 
 # Calculate scores and divide into groups
@@ -50,8 +73,12 @@ def calculate_scores(data, afinn):
     average_score = data['Final_Score'].mean()
 
     # Split into groups
-    good_kids = data[data['Final_Score'] >= average_score]
-    bad_kids = data[data['Final_Score'] < average_score]
+    good_kids = data[data['Final_Score'] >= average_score].reset_index(drop=True)
+    bad_kids = data[data['Final_Score'] < average_score].reset_index(drop=True)
+
+    print(f"Total Kids: {len(data)}")
+    print(f"Good Kids: {len(good_kids)}")
+    print(f"Bad Kids: {len(bad_kids)}")
 
     return good_kids, bad_kids
 
@@ -86,18 +113,23 @@ def solve_tsp_greedy(distance_matrix, start_index):
 
     for _ in range(n - 1):
         last = path[-1]
-        nearest, min_distance = -1, float('inf')
+        nearest = -1
+        min_distance = float('inf')
         for i in range(n):
             if not visited[i] and distance_matrix[last][i] < min_distance:
                 nearest = i
                 min_distance = distance_matrix[last][i]
+        if nearest == -1:
+            # No unvisited nodes left
+            break
         path.append(nearest)
         visited[nearest] = True
         total_distance += min_distance
 
     # Return to starting point
-    total_distance += distance_matrix[path[-1]][path[0]]
-    path.append(start_index)
+    if n > 1:
+        total_distance += distance_matrix[path[-1]][path[0]]
+        path.append(start_index)
 
     return path, total_distance
 
@@ -113,29 +145,49 @@ def main():
     # Compute scores and separate into groups
     good_kids, bad_kids = calculate_scores(data, afinn)
 
-    # Process good kids
-    good_locations = list(zip(good_kids['Latitude'], good_kids['Longitude']))
-    if good_locations:
-        good_distance_matrix = build_distance_matrix(good_locations)
-        easternmost_good = max(range(len(good_locations)), key=lambda i: good_locations[i][1])
-        good_path_indices, good_total_distance = solve_tsp_greedy(good_distance_matrix, easternmost_good)
-        good_path = [good_kids.iloc[i]['Name'] for i in good_path_indices]
+    # Function to process kids and solve TSP
+    def process_kids(kids, group_name):
+        locations = list(zip(kids['Latitude'], kids['Longitude']))
+        if not locations:
+            print(f"No locations found for {group_name} group.")
+            return
 
-        print("Good kids' path:")
-        print(" -> ".join(good_path))
-        print(f"Total distance: {good_total_distance:.2f} km")
+        distance_matrix = build_distance_matrix(locations)
+        
+        # Choose the starting point as the easternmost location (highest longitude)
+        easternmost_index = max(range(len(locations)), key=lambda i: locations[i][1])
+        path_indices, total_distance = solve_tsp_greedy(distance_matrix, easternmost_index)
 
-    # Process bad kids
-    bad_locations = list(zip(bad_kids['Latitude'], bad_kids['Longitude']))
-    if bad_locations:
-        bad_distance_matrix = build_distance_matrix(bad_locations)
-        easternmost_bad = max(range(len(bad_locations)), key=lambda i: bad_locations[i][1])
-        bad_path_indices, bad_total_distance = solve_tsp_greedy(bad_distance_matrix, easternmost_bad)
-        bad_path = [bad_kids.iloc[i]['Name'] for i in bad_path_indices]
+        # Convert path indices to actual kid identifiers (assuming there's an 'ID' column)
+        if 'ID' in kids.columns:
+            path_ids = kids.loc[path_indices, 'ID'].tolist()
+        else:
+            # If no 'ID', use the index
+            path_ids = path_indices
 
-        print("\nBad kids' path:")
-        print(" -> ".join(bad_path))
-        print(f"Total distance: {bad_total_distance:.2f} km")
+        # Build the fluent route string with arrows
+        route_parts = []
+        for idx in path_indices:
+            if 'Name' in kids.columns:
+                name = kids.loc[idx, 'Name']
+            else:
+                name = f"Kid {path_ids[idx]}"
+            lat = kids.loc[idx, 'Latitude']
+            lon = kids.loc[idx, 'Longitude']
+            route_parts.append(f"{name} (Lat: {lat:.6f}, Lon: {lon:.6f})")
+        
+        route_str = " → ".join(route_parts)
 
+        print(f"\n{group_name} Kids Route:")
+        print(f"Total Distance: {total_distance:.2f} km")
+        print("Visit Order:")
+        print(route_str)
+
+    # Process Good Kids
+    process_kids(good_kids, "Good")
+
+    # Process Bad Kids
+    process_kids(bad_kids, "Bad")
+ 
 if __name__ == "__main__":
     main()

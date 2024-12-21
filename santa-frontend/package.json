@@ -1,0 +1,24 @@
+{
+  "name": "App name",
+  "version": "1.0.0",
+  "description": "App description",
+  "main": "./src/main.js",
+  "scripts": {
+    "dev": "vite --host --open",
+    "build": "vite build",
+    "test": "no test specified"
+  },
+  "author": "Dominic Flocea",
+  "license": "ISC",
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/material": "^6.2.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.3"
+  }
+}

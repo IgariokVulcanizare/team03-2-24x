@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test</title>
+  <style>
+    input {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  display: block !important;
+  z-index: 9999 !important;
+  position: relative !important;
+}
+
+  </style>
+</head>
+<body>
+  <form>
+    <input type="email" id="email" tabindex="1">
+<input type="password" id="password" tabindex="2">
+  </form>
+  <script>
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    emailInput.disabled = false;
+    passwordInput.disabled = false;
+    emailInput.focus(); // Automatically focus on the email field
+  </script>
+</body>
+</html>

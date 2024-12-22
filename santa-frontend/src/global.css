@@ -3,3 +3,13 @@
   margin: 0;
   padding: 0;
 }
+
+.marker {
+  /* The background color is overridden by inline styles in the JSX */
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+  cursor: pointer; /* Change cursor to pointer on hover */
+}

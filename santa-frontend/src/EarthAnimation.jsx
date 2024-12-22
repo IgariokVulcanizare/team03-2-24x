@@ -3,14 +3,10 @@
 import React, { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-
-// Import the Santa model
-import santaModel from "./santa.glb";
 
 // Set your Mapbox access token
-mapboxgl.accessToken = "pk.eyJ1IjoiaXZhbXB5eSIsImEiOiJjbTR5aWNteXQwc3djMmtzOHpocm94cHNrIn0.Ic3HQz_R__Oib4zwhwyA6Q"; // Replace with your actual Mapbox access token
+mapboxgl.accessToken =
+  "pk.eyJ1IjoiaXZhbXB5eSIsImEiOiJjbTR5aWNteXQwc3djMmtzOHpocm94cHNrIn0.Ic3HQz_R__Oib4zwhwyA6Q"; // Replace with your actual Mapbox access token
 
 const EarthAnimation = () => {
   const mapContainer = useRef(null);
@@ -29,102 +25,14 @@ const EarthAnimation = () => {
       map.setFog({}); // Set fog for better visual effect
     });
 
-    let renderer, scene, camera, santa;
-
-    const setupThreeJS = () => {
-      // Get Mapbox's WebGL context
-      const canvas = map.getCanvas();
-      const gl = map.painter.context.gl;
-
-      // Initialize Three.js Renderer
-      renderer = new THREE.WebGLRenderer({
-        canvas: canvas,
-        context: gl,
-        antialias: true,
-      });
-      renderer.autoClear = false; // Prevent Mapbox from clearing the canvas
-      renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-      renderer.setPixelRatio(window.devicePixelRatio);
-
-      // Create Scene and Camera
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(
-        75,
-        canvas.clientWidth / canvas.clientHeight,
-        0.1,
-        1000
-      );
-      camera.position.set(0, 3, 10);
-
-      // Add Lighting
-      const ambientLight = new THREE.AmbientLight(0xffffff, 1); // Soft white light
-      scene.add(ambientLight);
-
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-      directionalLight.position.set(1, 1, 1).normalize();
-      scene.add(directionalLight);
-    };
-
-    // Helper to convert latitude/longitude to spherical coordinates
-    const latLonToCartesian = (lat, lon, radius) => {
-      const phi = (90 - lat) * (Math.PI / 180); // Convert latitude to polar angle
-      const theta = (lon + 180) * (Math.PI / 180); // Convert longitude to azimuthal angle
-
-      const x = radius * Math.sin(phi) * Math.cos(theta);
-      const y = radius * Math.cos(phi);
-      const z = radius * Math.sin(phi) * Math.sin(theta);
-
-      return { x, y, z };
-    };
-
-    // Load Santa's Model
-    const loadModel = () => {
-      const loader = new GLTFLoader();
-      loader.load(
-        santaModel,
-        (gltf) => {
-          santa = gltf.scene;
-          santa.scale.set(0.5, 0.5, 0.5); // Adjust scale
-
-          // Position the model on top of the globe (e.g., North Pole)
-          const radius = 3; // Approximate radius of the globe
-          const position = latLonToCartesian(90, 0, radius + 0.2); // Slightly above the globe
-          santa.position.set(position.x, position.y, position.z);
-
-          // Rotate the model to align it properly
-          santa.lookAt(0, 0, 0);
-
-          scene.add(santa);
-          animateModel();
-        },
-        undefined,
-        (error) => {
-          console.error("An error occurred while loading the model:", error);
-        }
-      );
-    };
-
-    // Animate the Model
-    const animateModel = () => {
-      const animate = () => {
-        if (santa) {
-          santa.rotation.y += 0.01; // Rotate the model on its own axis
-        }
-
-        renderer.render(scene, camera); // Render Three.js scene
-        map.triggerRepaint(); // Request Mapbox to repaint the scene
-        requestAnimationFrame(animate); // Loop animation
-      };
-
-      animate();
-    };
-
     // Function to load path data and add as a GeoJSON layer
-    const loadPathData = (map, fileName, color) => {
+    const loadPathData = (map, fileName, color, type) => {
       fetch(`/${fileName}`)
         .then((response) => {
           if (!response.ok) {
-            throw new Error(`Failed to fetch ${fileName}: ${response.status} ${response.statusText}`);
+            throw new Error(
+              `Failed to fetch ${fileName}: ${response.status} ${response.statusText}`
+            );
           }
           return response.json();
         })
@@ -213,8 +121,8 @@ const EarthAnimation = () => {
               const el = document.createElement("div");
               el.className = "marker";
               el.style.backgroundColor = color;
-              el.style.width = "10px"; // Increased size
-              el.style.height = "10px"; // Increased size
+              el.style.width = "20px"; // Increased size
+              el.style.height = "20px"; // Increased size
               el.style.borderRadius = "50%";
               el.style.border = "2px solid white";
               el.style.boxShadow = "0 0 2px rgba(0, 0, 0, 0.5)";
@@ -233,33 +141,22 @@ const EarthAnimation = () => {
           console.error(`Error loading ${fileName}:`, error);
         });
     };
-    
 
-    // Add Custom Three.js Layer to Mapbox
-    const addCustomLayer = () => {
-      setupThreeJS();
-      loadModel();
-
-      // Load and add the path lines after the map has loaded
-      loadPathData(map, "good_path.json", "#00FF00"); // Green for good kids
-      loadPathData(map, "bad_path.json", "#FF0000"); // Red for bad kids
-
-      // Optionally animate Santa along the good path
-      // animateSantaAlongPath(map, "good_path.json");
-
-      // Optionally animate Santa along the bad path
-      // animateSantaAlongPath(map, "bad_path.json");
+    // Add Custom Layers to Mapbox
+    const addCustomLayers = () => {
+      // Load and add the path lines with animation
+      // Parameters: map, fileName, color, type ("good" or "bad")
+      loadPathData(map, "good_path.json", "#f19506", "good"); // Green for good kids
+      loadPathData(map, "bad_path.json", "#FF0000", "bad"); // Red for bad kids
     };
 
-    map.on("load", addCustomLayer);
+    map.on("load", addCustomLayers);
 
     // Define the resize handler
     const handleResize = () => {
       const canvas = map.getCanvas();
-      if (camera && renderer) { // Ensure camera and renderer are defined
-        camera.aspect = canvas.clientWidth / canvas.clientHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+      if (map && map.resize) {
+        map.resize();
       }
     };
 
@@ -277,6 +174,7 @@ const EarthAnimation = () => {
     <div
       ref={mapContainer}
       style={{ width: "100%", height: "100vh" }}
+      id="map"
     ></div>
   );
 };
@@ -284,12 +182,15 @@ const EarthAnimation = () => {
 // Optional: Add CSS for the marker in your CSS file (e.g., App.css)
 /*
 .marker {
-  background-color: #00FF00; // This will be overridden by inline styles
-  width: 20px;
+  /* Remove background-color as the image will be used instead */
+  /* width: 20px;
   height: 20px;
   border-radius: 50%;
   border: 2px solid white;
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 */
 

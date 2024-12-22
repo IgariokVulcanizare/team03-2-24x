@@ -1,4 +1,4 @@
-import { StrictMode } from "react";
+import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import Hero from "./Hero";
 import Nav from "./Nav";
@@ -22,6 +22,7 @@ createRoot(document.getElementById("app")).render(
     </div>
   </StrictMode>
 );
+<<<<<<< HEAD
 
 
 
@@ -72,3 +73,5 @@ createRoot(document.getElementById("app")).render(
 );
 
 */
+=======
+>>>>>>> 4c3e0efe3963f3ab4b9046d6c4c3c16e80ff8f3e

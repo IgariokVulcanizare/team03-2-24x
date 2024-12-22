@@ -28,7 +28,7 @@ const Navbar = () => {
   return (
     <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px' }}>
       <div>
-        <img src="./images/Renovo(1).png" alt="Logo" style={{ height: '50px', cursor: 'pointer' }} />
+        <img src="Renovo(1).png" alt="Logo" style={{ height: '50px', cursor: 'pointer' }} />
       </div>
       <ul style={{ display: 'flex', padding: '0', margin: '0' }}>
         {['Gifts', 'Kids', 'Routes', 'Tired'].map((category, index) => (

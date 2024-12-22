@@ -5,7 +5,6 @@ body {
   padding: 0;
 }
 
-<<<<<<< HEAD
 .behaviour-container {
   display: flex;
   justify-content: center;
@@ -103,14 +102,4 @@ body {
   .left {
     margin-right: 0;
   }
-=======
-.marker {
-  /* The background color is overridden by inline styles in the JSX */
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
-  cursor: pointer; /* Change cursor to pointer on hover */
->>>>>>> 4c3e0efe3963f3ab4b9046d6c4c3c16e80ff8f3e
 }

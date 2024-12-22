@@ -7,7 +7,7 @@ import Nav from "./Nav";
 import EarthAnimation from "./EarthAnimation";
 import FilterChildren from "./FilterChildren"
 import Behaviour from "./behaviour";
-import CategorizedGifts from "./CategorizedGifts"; // Import CategorizedGifts components
+import CategorizedGifts from "./CategorizedGifts"; // Import CategorizedGifts component
 import './global.css';
 
 createRoot(document.getElementById("app")).render(
@@ -19,26 +19,13 @@ createRoot(document.getElementById("app")).render(
       <Hero />
       <EarthAnimation />
       {/* <FilterChildren /> */}
-      {/* <Behaviour /> */}
+      <Behaviour />
       
       {/* Add CategorizedGifts component here */}
-      {/* <CategorizedGifts /> */}
-
-    <div className="app-container">
-      <BrowserRouter>
-        <Nav />
-        <Routes>
-          <Route path="/" element={<Hero />} />
-          <Route path="/earth-animation" element={<EarthAnimation />} />
-          <Route path="/filter-children" element={<FilterChildren />} />
-          <Route path="/behaviour" element={<Behaviour />} />
-          <Route path="/categorized-gifts" element={<CategorizedGifts />} />
-        </Routes>
-      </BrowserRouter>
+      <CategorizedGifts />
     </div>
   </StrictMode>
 );
-
 
 
 

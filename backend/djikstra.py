@@ -106,6 +106,7 @@ def build_distance_matrix(locations):
             distance_matrix[i][j] = distance
             distance_matrix[j][i] = distance
     return distance_matrix
+
 # Solve TSP using a greedy nearest neighbor approach
 def solve_tsp_greedy(distance_matrix, start_index):
     n = len(distance_matrix)
@@ -187,13 +188,18 @@ def main():
         # Build the route string with arrows
         route_parts = []
         for idx in path_indices:
-            name = kids.loc[idx, 'Child_ID'] if 'Child_ID' in kids.columns else kids.loc[idx, 'Name']
+            if 'Child_ID' in kids.columns:
+                name = kids.loc[idx, 'Child_ID']
+            elif 'Name' in kids.columns:
+                name = kids.loc[idx, 'Name']
+            else:
+                name = f"Kid {idx}"
             lat = kids.loc[idx, 'Latitude']
             lon = kids.loc[idx, 'Longitude']
             horn_diameter = horn_diameters[idx]
             probability = calculate_fit_probability(santa_size, horn_diameter)
             message = "You can enter safely." if probability >= 0.7 else "Rudolph suggests skipping the cookies."
-            route_parts.append(f"{name} (Lat: {lat:.6f}, Lon: {lon:.6f}) - Probability of entering the horn: {probability:.2f} => {message}")
+            route_parts.append(f"{name} (Lat: {lat:.6f}, Lon: {lon:.6f}) - Probability: {probability:.2f} => {message}")
 
         route_str = " \u2192 ".join(route_parts)
 

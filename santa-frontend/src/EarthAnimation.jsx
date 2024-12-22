@@ -213,8 +213,8 @@ const EarthAnimation = () => {
               const el = document.createElement("div");
               el.className = "marker";
               el.style.backgroundColor = color;
-              el.style.width = "20px"; // Increased size
-              el.style.height = "20px"; // Increased size
+              el.style.width = "10px"; // Increased size
+              el.style.height = "10px"; // Increased size
               el.style.borderRadius = "50%";
               el.style.border = "2px solid white";
               el.style.boxShadow = "0 0 2px rgba(0, 0, 0, 0.5)";

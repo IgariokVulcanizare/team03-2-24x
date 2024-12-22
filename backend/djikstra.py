@@ -1,5 +1,3 @@
-# djikstra.py
-
 import csv
 import math
 import os
@@ -106,6 +104,7 @@ def build_distance_matrix(locations):
             distance_matrix[i][j] = distance
             distance_matrix[j][i] = distance
     return distance_matrix
+
 # Solve TSP using a greedy nearest neighbor approach
 def solve_tsp_greedy(distance_matrix, start_index):
     n = len(distance_matrix)
@@ -172,6 +171,9 @@ def main():
     def process_kids(kids, group_name):
         santa_size = 83.82  # Example Santa size in cm
         horn_diameters = [random.uniform(50, 150) for _ in range(len(kids))]  # Example horn sizes in cm
+
+        # Limit to 75 kids
+        kids = kids.sample(min(len(kids), 75), random_state=42).reset_index(drop=True)
 
         locations = list(zip(kids['Latitude'], kids['Longitude']))
         if not locations:

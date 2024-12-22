@@ -38,116 +38,109 @@ const EarthAnimation = () => {
         })
         .then((data) => {
           console.log(`Loaded data for ${fileName}:`, data); // Debugging line
-
-          // Validate GeoJSON structure
-          const isValidFeatureCollection =
-            data.type === "FeatureCollection" &&
-            Array.isArray(data.features) &&
-            data.features.length > 0 &&
-            ["LineString", "MultiLineString"].includes(
-              data.features[0].geometry.type
-            );
-
-          const isValidFeature =
-            data.type === "Feature" &&
-            ["LineString", "MultiLineString"].includes(data.geometry.type);
-
-          if (isValidFeatureCollection || isValidFeature) {
-            const features = isValidFeatureCollection
-              ? data.features
-              : [data];
-
-            features.forEach((feature, index) => {
-              // Add source
-              const sourceId = `${fileName}_source_${index}`;
-              map.addSource(sourceId, {
-                type: "geojson",
-                data: feature,
-                lineMetrics: true, // Required for line-progress if animating lines
-              });
-
-              // Add line layer
-              const layerId = `${fileName}_layer_${index}`;
-              map.addLayer({
-                id: layerId,
-                type: "line",
-                source: sourceId,
-                layout: {
-                  "line-join": "round",
-                  "line-cap": "round",
-                },
-                paint: {
-                  "line-width": 6, // Thicker lines
-                  "line-color": color,
-                },
-              });
-
-              // Add markers for each coordinate with image icons
-              if (feature.geometry.type === "LineString") {
-                feature.geometry.coordinates.forEach(
-                  ([lon, lat], coordIndex) => {
-                    const name = `Kid ${coordIndex + 1}`;
-                    const message = `${name}: (${lat.toFixed(
-                      4
-                    )}, ${lon.toFixed(4)})`;
-
-                    // Create a custom HTML element for the marker
-                    const el = document.createElement("div");
-                    el.className = "marker";
-
-                    // Create an <img> element for the icon
-                    const img = document.createElement("img");
-                    img.src = type === "good" ? "/good.png" : "/bad.png"; // Path to your images
-                    img.alt = type === "good" ? "Good Kid" : "Bad Kid";
-                    img.style.width = "40px"; // Adjust size as needed
-                    img.style.height = "40px"; // Adjust size as needed
-
-                    el.appendChild(img);
-
-                    new mapboxgl.Marker(el)
-                      .setLngLat([lon, lat])
-                      .setPopup(
-                        new mapboxgl.Popup({ offset: 25 }).setText(message)
-                      )
-                      .addTo(map);
-                  }
-                );
-              } else if (feature.geometry.type === "MultiLineString") {
-                feature.geometry.coordinates.forEach((line, lineIndex) => {
-                  line.forEach(([lon, lat], coordIndex) => {
-                    const name = `Kid ${coordIndex + 1}`;
-                    const message = `${name}: (${lat.toFixed(
-                      4
-                    )}, ${lon.toFixed(4)})`;
-
-                    // Create a custom HTML element for the marker
-                    const el = document.createElement("div");
-                    el.className = "marker";
-
-                    // Create an <img> element for the icon
-                    const img = document.createElement("img");
-                    img.src = type === "good" ? "/good.png" : "/bad.png"; // Path to your images
-                    img.alt = type === "good" ? "Good Kid" : "Bad Kid";
-                    img.style.width = "24px"; // Adjust size as needed
-                    img.style.height = "24px"; // Adjust size as needed
-
-                    el.appendChild(img);
-
-                    new mapboxgl.Marker(el)
-                      .setLngLat([lon, lat])
-                      .setPopup(
-                        new mapboxgl.Popup({ offset: 25 }).setText(message)
-                      )
-                      .addTo(map);
-                  });
+    
+          // Check if data is a FeatureCollection
+          if (data.type === "FeatureCollection" && Array.isArray(data.features)) {
+            data.features.forEach((feature, index) => {
+              if (feature.geometry && feature.geometry.coordinates) {
+                // Add source
+                map.addSource(`${fileName}_source_${index}`, {
+                  type: "geojson",
+                  data: feature,
                 });
+    
+                // Add line layer with increased line-width
+                map.addLayer({
+                  id: `${fileName}_layer_${index}`,
+                  type: "line",
+                  source: `${fileName}_source_${index}`,
+                  layout: {
+                    "line-join": "round",
+                    "line-cap": "round",
+                  },
+                  paint: {
+                    "line-color": color,
+                    "line-width": 6, // Increased from 2 to 6 for thicker lines
+                  },
+                });
+    
+                // Add markers for each coordinate with larger, custom-styled markers
+                feature.geometry.coordinates.forEach(([lon, lat], coordIndex) => {
+                  const name = `Kid ${coordIndex + 1}`;
+                  const message = `Kid ${coordIndex + 1}: (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+    
+                  // Create a custom HTML element for the marker
+                  const el = document.createElement("div");
+                  el.className = "marker";
+                  el.style.backgroundColor = color;
+                  el.style.width = "20px"; // Increased size
+                  el.style.height = "20px"; // Increased size
+                  el.style.borderRadius = "50%";
+                  el.style.border = "2px solid white";
+                  el.style.boxShadow = "0 0 2px rgba(0, 0, 0, 0.5)";
+    
+                  new mapboxgl.Marker(el)
+                    .setLngLat([lon, lat])
+                    .setPopup(new mapboxgl.Popup({ offset: 25 }).setText(message))
+                    .addTo(map);
+                });
+              } else {
+                console.error(`Feature at index ${index} in ${fileName} lacks geometry.coordinates`);
               }
+<<<<<<< HEAD
               
 
               // Optionally, animate the line if needed
               // animateLine(map, layerId, duration, color);
+=======
+>>>>>>> 7b7203fd31ad4bdf83d5056dd3e3bd9e008941e4
             });
-          } else {
+          }
+          // Check if data is a single Feature
+          else if (data.type === "Feature" && data.geometry && data.geometry.coordinates) {
+            // Add source
+            map.addSource(`${fileName}_source`, {
+              type: "geojson",
+              data: data,
+            });
+    
+            // Add line layer with increased line-width
+            map.addLayer({
+              id: `${fileName}_layer`,
+              type: "line",
+              source: `${fileName}_source`,
+              layout: {
+                "line-join": "round",
+                "line-cap": "round",
+              },
+              paint: {
+                "line-color": color,
+                "line-width": 6, // Increased from 2 to 6 for thicker lines
+              },
+            });
+    
+            // Add markers for each coordinate with larger, custom-styled markers
+            data.geometry.coordinates.forEach(([lon, lat], index) => {
+              const name = `Kid ${index + 1}`;
+              const message = `Kid ${index + 1}: (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+    
+              // Create a custom HTML element for the marker
+              const el = document.createElement("div");
+              el.className = "marker";
+              el.style.backgroundColor = color;
+              el.style.width = "20px"; // Increased size
+              el.style.height = "20px"; // Increased size
+              el.style.borderRadius = "50%";
+              el.style.border = "2px solid white";
+              el.style.boxShadow = "0 0 2px rgba(0, 0, 0, 0.5)";
+    
+              new mapboxgl.Marker(el)
+                .setLngLat([lon, lat])
+                .setPopup(new mapboxgl.Popup({ offset: 25 }).setText(message))
+                .addTo(map);
+            });
+          }
+          else {
             console.error(`Invalid GeoJSON structure in ${fileName}:`, data);
           }
         })

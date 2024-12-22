@@ -31,13 +31,7 @@ const Navbar = () => {
     <nav style={navBarStyle}>
       {/* Logo */}
       <div>
-        <a href="/">
-          <img
-            src={logo}
-            alt="Renovo Logo"
-            style={{ height: '80px', cursor: 'pointer' }}
-          />
-        </a>
+        <img src="./images/Renovo(1).png" alt="Logo" style={{ height: '50px', cursor: 'pointer' }} />
       </div>
 
       {/* Navigation Links */}

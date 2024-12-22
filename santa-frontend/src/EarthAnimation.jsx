@@ -87,6 +87,13 @@ const EarthAnimation = () => {
               } else {
                 console.error(`Feature at index ${index} in ${fileName} lacks geometry.coordinates`);
               }
+<<<<<<< HEAD
+              
+
+              // Optionally, animate the line if needed
+              // animateLine(map, layerId, duration, color);
+=======
+>>>>>>> 7b7203fd31ad4bdf83d5056dd3e3bd9e008941e4
             });
           }
           // Check if data is a single Feature

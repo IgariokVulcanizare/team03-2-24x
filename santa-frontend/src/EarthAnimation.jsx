@@ -1,14 +1,16 @@
+// EarthAnimation.jsx
+
 import React, { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 
-// Import the model
+// Import the Santa model
 import santaModel from "./santa.glb";
 
 // Set your Mapbox access token
-mapboxgl.accessToken = "pk.eyJ1IjoiaXZhbXB5eSIsImEiOiJjbTR5aWNteXQwc3djMmtzOHpocm94cHNrIn0.Ic3HQz_R__Oib4zwhwyA6Q";
+mapboxgl.accessToken = "YOUR_MAPBOX_ACCESS_TOKEN_HERE"; // Replace with your actual Mapbox access token
 
 const EarthAnimation = () => {
   const mapContainer = useRef(null);
@@ -19,7 +21,7 @@ const EarthAnimation = () => {
       container: mapContainer.current,
       style: "mapbox://styles/mapbox/satellite-streets-v11",
       center: [0, 0],
-      zoom: 1,
+      zoom: 1.5,
       projection: "globe",
     });
 
@@ -46,7 +48,12 @@ const EarthAnimation = () => {
 
       // Create Scene and Camera
       scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+      camera = new THREE.PerspectiveCamera(
+        75,
+        canvas.clientWidth / canvas.clientHeight,
+        0.1,
+        1000
+      );
       camera.position.set(0, 3, 10);
 
       // Add Lighting
@@ -78,7 +85,7 @@ const EarthAnimation = () => {
         (gltf) => {
           santa = gltf.scene;
           santa.scale.set(0.5, 0.5, 0.5); // Adjust scale
-          
+
           // Position the model on top of the globe (e.g., North Pole)
           const radius = 3; // Approximate radius of the globe
           const position = latLonToCartesian(90, 0, radius + 0.2); // Slightly above the globe
@@ -111,28 +118,18 @@ const EarthAnimation = () => {
       animate();
     };
 
-    // Add Custom Three.js Layer to Mapbox
-    const addCustomLayer = () => {
-      setupThreeJS();
-      loadModel();
-
-      // Load and add the path lines after the map has loaded
-      loadPathData(map, "good_path.json", "#00FF00"); // Green for good kids
-      loadPathData(map, "bad_path.json", "#FF0000");  // Red for bad kids
-    };
-
     // Function to load path data and add as a GeoJSON layer
     const loadPathData = (map, fileName, color) => {
       fetch(`/${fileName}`)
-        .then(response => response.json())
-        .then(data => {
+        .then((response) => response.json())
+        .then((data) => {
           // Add source
           map.addSource(`${fileName}_source`, {
             type: "geojson",
             data: data,
           });
 
-          // Add layer
+          // Add line layer
           map.addLayer({
             id: `${fileName}_layer`,
             type: "line",
@@ -146,55 +143,80 @@ const EarthAnimation = () => {
               "line-width": 2,
             },
           });
+
+          // Add markers for each coordinate
+          data.geometry.coordinates.forEach(([lon, lat], index) => {
+            const feature = data.properties.features
+              ? data.properties.features[index]
+              : null;
+            const name = feature
+              ? feature.name || `Kid ${index + 1}`
+              : `Kid ${index + 1}`;
+            const message = feature
+              ? feature.message ||
+                `Kid ${index + 1}: (${lat.toFixed(4)}, ${lon.toFixed(4)})`
+              : `Kid ${index + 1}: (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+
+            new mapboxgl.Marker({ color: color })
+              .setLngLat([lon, lat])
+              .setPopup(new mapboxgl.Popup({ offset: 25 }).setText(message))
+              .addTo(map);
+          });
         })
-        .catch(error => console.error(`Error loading ${fileName}:`, error));
+        .catch((error) =>
+          console.error(`Error loading ${fileName}:`, error)
+        );
+    };
+
+    // Optional: Animate Santa along the path
+    const animateSantaAlongPath = (map, fileName) => {
+      fetch(`/${fileName}`)
+        .then((response) => response.json())
+        .then((data) => {
+          const coordinates = data.geometry.coordinates;
+          if (coordinates.length === 0) return;
+
+          let currentIndex = 0;
+          const totalPoints = coordinates.length;
+
+          const moveSanta = () => {
+            if (currentIndex >= totalPoints) {
+              currentIndex = 0; // Loop back to start
+            }
+
+            const [lon, lat] = coordinates[currentIndex];
+            const { x, y, z } = latLonToCartesian(lat, lon, 3); // Radius should match the globe
+            santa.position.set(x, y, z);
+            santa.lookAt(0, 0, 0);
+
+            currentIndex += 1;
+            setTimeout(moveSanta, 1000); // Adjust the speed (milliseconds) as needed
+          };
+
+          moveSanta();
+        })
+        .catch((error) =>
+          console.error(`Error loading ${fileName} for animation:`, error)
+        );
+    };
+
+    // Add Custom Three.js Layer to Mapbox
+    const addCustomLayer = () => {
+      setupThreeJS();
+      loadModel();
+
+      // Load and add the path lines after the map has loaded
+      loadPathData(map, "good_path.json", "#00FF00"); // Green for good kids
+      loadPathData(map, "bad_path.json", "#FF0000"); // Red for bad kids
+
+      // Optionally animate Santa along the good path
+      // animateSantaAlongPath(map, "good_path.json");
+
+      // Optionally animate Santa along the bad path
+      // animateSantaAlongPath(map, "bad_path.json");
     };
 
     map.on("load", addCustomLayer);
-
-    // Calculate and add the 3D path after the map has loaded
-    const add3DPath = () => {
-      // Example: Adding a 3D line using Three.js (optional)
-      // You can skip this if you prefer using Mapbox's 2D lines
-
-      // Load path data
-      fetch('/good_path.json')
-        .then(response => response.json())
-        .then(data => {
-          const coordinates = data.geometry.coordinates;
-          const pathGeometry = new THREE.BufferGeometry().setFromPoints(
-            coordinates.map(coord => {
-              const [lon, lat] = coord;
-              const { x, y, z } = latLonToCartesian(lat, lon, 3); // Radius should match the globe
-              return new THREE.Vector3(x, y, z);
-            })
-          );
-
-          const pathMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
-          const pathLine = new THREE.Line(pathGeometry, pathMaterial);
-          scene.add(pathLine);
-        });
-
-      fetch('/bad_path.json')
-        .then(response => response.json())
-        .then(data => {
-          const coordinates = data.geometry.coordinates;
-          const pathGeometry = new THREE.BufferGeometry().setFromPoints(
-            coordinates.map(coord => {
-              const [lon, lat] = coord;
-              const { x, y, z } = latLonToCartesian(lat, lon, 3); // Radius should match the globe
-              return new THREE.Vector3(x, y, z);
-            })
-          );
-
-          const pathMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
-          const pathLine = new THREE.Line(pathGeometry, pathMaterial);
-          scene.add(pathLine);
-        });
-    };
-
-    // Optionally call add3DPath if you want 3D lines
-    // map.on("load", add3DPath);
 
     // Handle window resizing
     window.addEventListener("resize", () => {
@@ -205,7 +227,10 @@ const EarthAnimation = () => {
     });
 
     // Cleanup on component unmount
-    return () => map.remove();
+    return () => {
+      window.removeEventListener("resize", () => {});
+      map.remove();
+    };
   }, []);
 
   return (

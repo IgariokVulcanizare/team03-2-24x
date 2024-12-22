@@ -106,7 +106,6 @@ def build_distance_matrix(locations):
             distance_matrix[i][j] = distance
             distance_matrix[j][i] = distance
     return distance_matrix
-
 # Solve TSP using a greedy nearest neighbor approach
 def solve_tsp_greedy(distance_matrix, start_index):
     n = len(distance_matrix)

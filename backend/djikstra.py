@@ -5,6 +5,7 @@ import sys
 from nltk.tokenize import word_tokenize
 import pandas as pd
 import nltk
+import random
 
 # Ensure NLTK data is downloaded
 nltk_packages = ['punkt']
@@ -131,10 +132,17 @@ def solve_tsp_greedy(distance_matrix, start_index):
 
     return path, total_distance
 
+# Function to calculate the probability Santa can fit through the horn
+def calculate_fit_probability(santa_size, horn_diameter):
+    if santa_size <= horn_diameter:
+        return 1.0  # 100% probability
+    else:
+        return math.exp(-(santa_size - horn_diameter) / horn_diameter)
+
 # Main execution
 def main():
     afinn_path = 'AFINN-111.txt'
-    data_path = 'santa.csv'
+    data_path = 'updated_santa.csv'
 
     # Load AFINN scores and data
     afinn = load_afinn(afinn_path)
@@ -145,6 +153,9 @@ def main():
 
     # Function to process kids and solve TSP
     def process_kids(kids, group_name):
+        santa_size = 83.82  # Example Santa size
+        horn_diameters = [random.uniform(50, 150) for _ in range(len(kids))]  # Example horn sizes
+
         locations = list(zip(kids['Latitude'], kids['Longitude']))
         if not locations:
             print(f"No locations found for {group_name} group.")
@@ -156,22 +167,16 @@ def main():
         easternmost_index = max(range(len(locations)), key=lambda i: locations[i][1])
         path_indices, total_distance = solve_tsp_greedy(distance_matrix, easternmost_index)
 
-        # Convert path indices to actual kid identifiers (assuming there's an 'ID' column)
-        if 'ID' in kids.columns:
-            path_ids = kids.loc[path_indices, 'ID'].tolist()
-        else:
-            path_ids = path_indices
-
         # Build the route string with arrows
         route_parts = []
         for idx in path_indices:
-            if 'Child_ID' in kids.columns:
-                name = kids.loc[idx, 'Child_ID']
-            else:
-                name = f"Kid {idx}"
+            name = kids.loc[idx, 'Child_ID'] if 'Child_ID' in kids.columns else f"Kid {idx}"
             lat = kids.loc[idx, 'Latitude']
             lon = kids.loc[idx, 'Longitude']
-            route_parts.append(f"{name} (Lat: {lat:.6f}, Lon: {lon:.6f})")
+            horn_diameter = horn_diameters[idx]
+            probability = calculate_fit_probability(santa_size, horn_diameter)
+            message = "You can enter safely." if probability >= 0.7 else "Rudolph suggests skipping the cookies."
+            route_parts.append(f"{name} (Lat: {lat:.6f}, Lon: {lon:.6f}) - Probability of entering the horn: {probability:.2f} => {message}")
 
         route_str = " \u2192 ".join(route_parts)
 

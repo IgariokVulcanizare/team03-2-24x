@@ -1,0 +1,19 @@
+{
+    "type": "Feature",
+    "properties": {
+        "group": "Bad"
+    },
+    "geometry": {
+        "type": "LineString",
+        "coordinates": [
+            [
+                178.0178,
+                -38.6625
+            ],
+            [
+                172.3833,
+                -43.5833
+            ]
+        ]
+    }
+    }

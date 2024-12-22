@@ -4,6 +4,7 @@ import Hero from "./Hero";
 import Nav from "./Nav";
 import './global.css';
 import EarthAnimation from './EarthAnimation';
+import MapboxOnly from "./MapboxOnly";
 
 createRoot(document.getElementById("app")).render(
   <StrictMode>
@@ -11,6 +12,7 @@ createRoot(document.getElementById("app")).render(
       <Nav /> 
       <Hero />
       <EarthAnimation />
+      <MapboxOnly />
     </div>
   </StrictMode>
 );

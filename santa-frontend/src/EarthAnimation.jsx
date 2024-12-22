@@ -111,6 +111,7 @@ const EarthAnimation = () => {
           santa.rotation.y += 0.01; // Rotate the model on its own axis
         }
 
+        renderer.render(scene, camera); // Render Three.js scene
         map.triggerRepaint(); // Request Mapbox to repaint the scene
         requestAnimationFrame(animate); // Loop animation
       };
@@ -123,94 +124,116 @@ const EarthAnimation = () => {
       fetch(`/${fileName}`)
         .then((response) => {
           if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(`Failed to fetch ${fileName}: ${response.status} ${response.statusText}`);
           }
           return response.json();
         })
         .then((data) => {
-          // Add source
-          map.addSource(`${fileName}_source`, {
-            type: "geojson",
-            data: data,
-          });
-
-          // Add line layer with increased line-width
-          map.addLayer({
-            id: `${fileName}_layer`,
-            type: "line",
-            source: `${fileName}_source`,
-            layout: {
-              "line-join": "round",
-              "line-cap": "round",
-            },
-            paint: {
-              "line-color": color,
-              "line-width": 6, // Increased from 2 to 6 for thicker lines
-            },
-          });
-
-          // Add markers for each coordinate with larger, custom-styled markers
-          data.geometry.coordinates.forEach(([lon, lat], index) => {
-            const name = `Kid ${index + 1}`;
-            const message = `Kid ${index + 1}: (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
-
-            // Create a custom HTML element for the marker
-            const el = document.createElement("div");
-            el.className = "marker";
-            el.style.backgroundColor = color;
-            el.style.width = "20px"; // Increased size
-            el.style.height = "20px"; // Increased size
-            el.style.borderRadius = "50%";
-            el.style.border = "2px solid white";
-            el.style.boxShadow = "0 0 2px rgba(0, 0, 0, 0.5)";
-
-            new mapboxgl.Marker(el)
-              .setLngLat([lon, lat])
-              .setPopup(new mapboxgl.Popup({ offset: 25 }).setText(message))
-              .addTo(map);
-          });
+          console.log(`Loaded data for ${fileName}:`, data); // Debugging line
+    
+          // Check if data is a FeatureCollection
+          if (data.type === "FeatureCollection" && Array.isArray(data.features)) {
+            data.features.forEach((feature, index) => {
+              if (feature.geometry && feature.geometry.coordinates) {
+                // Add source
+                map.addSource(`${fileName}_source_${index}`, {
+                  type: "geojson",
+                  data: feature,
+                });
+    
+                // Add line layer with increased line-width
+                map.addLayer({
+                  id: `${fileName}_layer_${index}`,
+                  type: "line",
+                  source: `${fileName}_source_${index}`,
+                  layout: {
+                    "line-join": "round",
+                    "line-cap": "round",
+                  },
+                  paint: {
+                    "line-color": color,
+                    "line-width": 6, // Increased from 2 to 6 for thicker lines
+                  },
+                });
+    
+                // Add markers for each coordinate with larger, custom-styled markers
+                feature.geometry.coordinates.forEach(([lon, lat], coordIndex) => {
+                  const name = `Kid ${coordIndex + 1}`;
+                  const message = `Kid ${coordIndex + 1}: (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+    
+                  // Create a custom HTML element for the marker
+                  const el = document.createElement("div");
+                  el.className = "marker";
+                  el.style.backgroundColor = color;
+                  el.style.width = "20px"; // Increased size
+                  el.style.height = "20px"; // Increased size
+                  el.style.borderRadius = "50%";
+                  el.style.border = "2px solid white";
+                  el.style.boxShadow = "0 0 2px rgba(0, 0, 0, 0.5)";
+    
+                  new mapboxgl.Marker(el)
+                    .setLngLat([lon, lat])
+                    .setPopup(new mapboxgl.Popup({ offset: 25 }).setText(message))
+                    .addTo(map);
+                });
+              } else {
+                console.error(`Feature at index ${index} in ${fileName} lacks geometry.coordinates`);
+              }
+            });
+          }
+          // Check if data is a single Feature
+          else if (data.type === "Feature" && data.geometry && data.geometry.coordinates) {
+            // Add source
+            map.addSource(`${fileName}_source`, {
+              type: "geojson",
+              data: data,
+            });
+    
+            // Add line layer with increased line-width
+            map.addLayer({
+              id: `${fileName}_layer`,
+              type: "line",
+              source: `${fileName}_source`,
+              layout: {
+                "line-join": "round",
+                "line-cap": "round",
+              },
+              paint: {
+                "line-color": color,
+                "line-width": 6, // Increased from 2 to 6 for thicker lines
+              },
+            });
+    
+            // Add markers for each coordinate with larger, custom-styled markers
+            data.geometry.coordinates.forEach(([lon, lat], index) => {
+              const name = `Kid ${index + 1}`;
+              const message = `Kid ${index + 1}: (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+    
+              // Create a custom HTML element for the marker
+              const el = document.createElement("div");
+              el.className = "marker";
+              el.style.backgroundColor = color;
+              el.style.width = "20px"; // Increased size
+              el.style.height = "20px"; // Increased size
+              el.style.borderRadius = "50%";
+              el.style.border = "2px solid white";
+              el.style.boxShadow = "0 0 2px rgba(0, 0, 0, 0.5)";
+    
+              new mapboxgl.Marker(el)
+                .setLngLat([lon, lat])
+                .setPopup(new mapboxgl.Popup({ offset: 25 }).setText(message))
+                .addTo(map);
+            });
+          }
+          else {
+            console.error(`Invalid GeoJSON structure in ${fileName}:`, data);
+          }
         })
         .catch((error) => {
           console.error(`Error loading ${fileName}:`, error);
         });
     };
-
-    // Optional: Animate Santa along the path
-    const animateSantaAlongPath = (map, fileName) => {
-      fetch(`/${fileName}`)
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then((data) => {
-          const coordinates = data.geometry.coordinates;
-          if (coordinates.length === 0) return;
-
-          let currentIndex = 0;
-          const totalPoints = coordinates.length;
-
-          const moveSanta = () => {
-            if (currentIndex >= totalPoints) {
-              currentIndex = 0; // Loop back to start
-            }
-
-            const [lon, lat] = coordinates[currentIndex];
-            const { x, y, z } = latLonToCartesian(lat, lon, 3); // Radius should match the globe
-            santa.position.set(x, y, z);
-            santa.lookAt(0, 0, 0);
-
-            currentIndex += 1;
-            setTimeout(moveSanta, 1000); // Adjust the speed (milliseconds) as needed
-          };
-
-          moveSanta();
-        })
-        .catch((error) => {
-          console.error(`Error loading ${fileName} for animation:`, error);
-        });
-    };
+    
 
     // Add Custom Three.js Layer to Mapbox
     const addCustomLayer = () => {
@@ -233,7 +256,7 @@ const EarthAnimation = () => {
     // Define the resize handler
     const handleResize = () => {
       const canvas = map.getCanvas();
-      if (camera) {
+      if (camera && renderer) { // Ensure camera and renderer are defined
         camera.aspect = canvas.clientWidth / canvas.clientHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(canvas.clientWidth, canvas.clientHeight);

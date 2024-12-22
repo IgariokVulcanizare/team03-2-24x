@@ -17,7 +17,7 @@ with open("santa.csv", 'r', encoding='utf-8') as file:
     csv_reader = csv.reader(file)
     header = next(csv_reader)
     for i, row in enumerate(csv_reader):
-        if i >= 200:  # Limit to the first 200 rows
+        if i >= 100:  # Limit to the first 200 rows
             break
         kids.append((row[1], row[7]))  # Store kid's name and desired gift
         gifts.append(row[7])

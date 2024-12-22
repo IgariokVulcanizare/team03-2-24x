@@ -1,3 +1,5 @@
+# djikstra.py
+
 import csv
 import math
 import os
@@ -6,6 +8,7 @@ from nltk.tokenize import word_tokenize
 import pandas as pd
 import nltk
 import random
+import json
 
 # Ensure NLTK data is downloaded
 nltk_packages = ['punkt']
@@ -139,6 +142,21 @@ def calculate_fit_probability(santa_size, horn_diameter):
     else:
         return math.exp(-(santa_size - horn_diameter) / horn_diameter)
 
+# Function to convert path indices to GeoJSON LineString coordinates
+def path_to_geojson(kids, path_indices, group_name):
+    path_coords = [[kids.iloc[idx]['Longitude'], kids.iloc[idx]['Latitude']] for idx in path_indices]
+    geojson = {
+        "type": "Feature",
+        "properties": {
+            "group": group_name
+        },
+        "geometry": {
+            "type": "LineString",
+            "coordinates": path_coords
+        }
+    }
+    return geojson
+
 # Main execution
 def main():
     afinn_path = 'AFINN-111.txt'
@@ -153,8 +171,8 @@ def main():
 
     # Function to process kids and solve TSP
     def process_kids(kids, group_name):
-        santa_size = 83.82  # Example Santa size
-        horn_diameters = [random.uniform(50, 150) for _ in range(len(kids))]  # Example horn sizes
+        santa_size = 83.82  # Example Santa size in cm
+        horn_diameters = [random.uniform(50, 150) for _ in range(len(kids))]  # Example horn sizes in cm
 
         locations = list(zip(kids['Latitude'], kids['Longitude']))
         if not locations:
@@ -170,7 +188,7 @@ def main():
         # Build the route string with arrows
         route_parts = []
         for idx in path_indices:
-            name = kids.loc[idx, 'Child_ID'] if 'Child_ID' in kids.columns else f"Kid {idx}"
+            name = kids.loc[idx, 'Child_ID'] if 'Child_ID' in kids.columns else kids.loc[idx, 'Name']
             lat = kids.loc[idx, 'Latitude']
             lon = kids.loc[idx, 'Longitude']
             horn_diameter = horn_diameters[idx]
@@ -184,6 +202,13 @@ def main():
         print(f"Total Distance: {total_distance:.2f} km")
         print("Visit Order:")
         print(route_str)
+
+        # Convert path to GeoJSON and save
+        geojson = path_to_geojson(kids, path_indices, group_name)
+        output_json = f"{group_name.lower()}_path.json"
+        with open(output_json, "w", encoding="utf-8") as f:
+            json.dump(geojson, f, ensure_ascii=False, indent=4)
+        print(f"{group_name} path saved to {output_json}")
 
     # Process Good Kids
     process_kids(good_kids, "Good")

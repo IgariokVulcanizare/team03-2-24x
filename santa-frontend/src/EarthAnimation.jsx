@@ -8,14 +8,17 @@ mapboxgl.accessToken =
   "pk.eyJ1IjoiaXZhbXB5eSIsImEiOiJjbTR5aWNteXQwc3djMmtzOHpocm94cHNrIn0.Ic3HQz_R__Oib4zwhwyA6Q";
 
 const EarthAnimation = () => {
+  const speedVar = 0.0001;
   const mapContainer = useRef(null);
   const [map, setMap] = useState(null);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [showGoodPath, setShowGoodPath] = useState(true);
-  const [showBadPath, setShowBadPath] = useState(true);
+
+  const [isGoodPathVisible, setIsGoodPathVisible] = useState(true);
+  const [isBadPathVisible, setIsBadPathVisible] = useState(true);
 
   const goodPathMarkers = useRef([]);
   const badPathMarkers = useRef([]);
+  const animationHandles = useRef({}); // Stores animation state and progress
 
   useEffect(() => {
     const mapInstance = new mapboxgl.Map({
@@ -36,6 +39,117 @@ const EarthAnimation = () => {
     return () => mapInstance.remove();
   }, []);
 
+  const animatePath = (coordinates, color, map, speedVar, pathKey) => {
+    let progress = animationHandles.current[pathKey]?.progress || 0;
+    const pathCoordinates = [];
+    const sourceId = `${color}_animated_source`;
+
+    if (!map.getSource(sourceId)) {
+      map.addSource(sourceId, {
+        type: "geojson",
+        data: {
+          type: "Feature",
+          geometry: {
+            type: "LineString",
+            coordinates: [],
+          },
+        },
+      });
+
+      map.addLayer({
+        id: `${color}_animated_layer`,
+        type: "line",
+        source: sourceId,
+        layout: {
+          "line-join": "round",
+          "line-cap": "round",
+        },
+        paint: {
+          "line-color": color,
+          "line-opacity": 1,
+          "line-width": 4,
+        },
+      });
+    }
+
+    const updatePath = () => {
+      if (!animationHandles.current[pathKey]?.isRunning) return;
+
+      const currentIndex = Math.floor(progress * (coordinates.length - 1));
+      const nextIndex = currentIndex + 1;
+
+      if (nextIndex < coordinates.length) {
+        const currentPoint = coordinates[currentIndex];
+        const nextPoint = coordinates[nextIndex];
+
+        const t = (progress * (coordinates.length - 1)) % 1;
+        const interpolatedPoint = [
+          currentPoint[0] + t * (nextPoint[0] - currentPoint[0]),
+          currentPoint[1] + t * (nextPoint[1] - currentPoint[1]),
+        ];
+
+        pathCoordinates.push(interpolatedPoint);
+
+        map.getSource(sourceId).setData({
+          type: "Feature",
+          geometry: {
+            type: "LineString",
+            coordinates: pathCoordinates,
+          },
+        });
+
+        progress += speedVar;
+        animationHandles.current[pathKey].progress = progress;
+
+        animationHandles.current[pathKey].frameId = requestAnimationFrame(updatePath);
+      } else {
+        map.getSource(sourceId).setData({
+          type: "Feature",
+          geometry: {
+            type: "LineString",
+            coordinates: coordinates,
+          },
+        });
+      }
+    };
+
+    if (!animationHandles.current[pathKey]) {
+      animationHandles.current[pathKey] = {
+        isRunning: true,
+        progress: 0,
+      };
+    }
+
+    updatePath();
+  };
+
+  const toggleVisibility = (type, visible) => {
+    const pathKey = type === "good" ? "good_path" : "bad_path";
+    const layerId = `${type}_animated_layer`;
+    const markers =
+      type === "good" ? goodPathMarkers.current : badPathMarkers.current;
+
+    // Pause or resume animation
+    animationHandles.current[pathKey].isRunning = visible;
+    console.log(animationHandles.current)
+
+    // Adjust path opacity
+    if (map.getLayer(layerId)) {
+      map.setPaintProperty(
+        layerId,
+        "line-opacity",
+        visible ? 1 : 0 // Fully visible or fully transparent
+      );
+    }
+
+    // Adjust marker visibility
+    if (visible) {
+      markers.forEach((marker) => marker.addTo(map));
+    } else {
+      markers.forEach((marker) => marker.remove());
+    }
+  };
+
   const addMarkers = (feature, type, map, names, gifts, probabilities) => {
     if (feature.geometry.type === "LineString") {
       feature.geometry.coordinates.forEach(([lon, lat], coordIndex) => {
@@ -54,8 +168,14 @@ const EarthAnimation = () => {
         const img = document.createElement("img");
         img.src = type === "good" ? "/good.png" : "/bad.png";
         img.alt = type === "good" ? "Good Kid" : "Bad Kid";
-        img.style.width = "40px";
-        img.style.height = "40px";
+
+        if (coordIndex === 0) {
+          img.style.width = "100px";
+          img.style.height = "100px";
+        } else {
+          img.style.width = "40px";
+          img.style.height = "40px";
+        }
 
         el.appendChild(img);
 
@@ -64,11 +184,11 @@ const EarthAnimation = () => {
           .setPopup(
             new mapboxgl.Popup({ offset: 25 }).setHTML(
               `<div>
-                <strong>Name:</strong> ${name}<br />
-                <strong>Gift:</strong> ${gift}<br />
-                <strong>Fitness:</strong> ${(probability * 100).toFixed(2)}%<br />
-                <strong></strong> ${message}
-              </div>`
+                  <strong>Name:</strong> ${name}<br />
+                  <strong>Gift:</strong> ${gift}<br />
+                  <strong>Fitness:</strong> ${(probability * 100).toFixed(2)}%<br />
+                  ${message}
+                </div>`
             )
           )
           .addTo(map);
@@ -82,95 +202,54 @@ const EarthAnimation = () => {
     }
   };
 
+  const loadPathData = async (fileName, color, type) => {
+    try {
+      const [giftsData, santaData] = await Promise.all([
+        fetch("gifts.csv").then((res) => res.text()),
+        fetch("santa2.csv").then((res) => res.text()),
+      ]);
+
+      const gifts = Papa.parse(giftsData, { header: true }).data.map(
+        (row) => row.Gift
+      );
+      const names = Papa.parse(santaData, { header: true }).data.map(
+        (row) => row.Name
+      );
+      const probabilities = Papa.parse(santaData, { header: true }).data.map(
+        (row) => parseFloat(row.Probability)
+      );
+
+      const response = await fetch(`/${fileName}`);
+      if (!response.ok) throw new Error(`Failed to fetch ${fileName}`);
+
+      const data = await response.json();
+      const features =
+        data.type === "FeatureCollection" ? data.features : [data];
+
+      features.forEach((feature) => {
+        if (feature.geometry.type === "LineString") {
+          const coordinates = feature.geometry.coordinates;
+          addMarkers(feature, type, map, names, gifts, probabilities);
+          const pathColor = type === "good" ? "#f19506" : "#FF0000";
+          animatePath(coordinates, pathColor, map, speedVar, `${type}_path`);
+          // save the current state?
+        }
+      });
+    } catch (error) {
+      console.error(`Error loading ${fileName}:`, error);
+    }
+  };
+
   useEffect(() => {
     if (!map || !mapLoaded) return;
-
-    const loadPathData = async (fileName, color, type) => {
-      try {
-        const [giftsData, santaData] = await Promise.all([
-          fetch("gifts.csv").then((res) => res.text()),
-          fetch("santa2.csv").then((res) => res.text()),
-        ]);
-
-        const gifts = Papa.parse(giftsData, { header: true }).data.map(
-          (row) => row.Gift
-        );
-        const names = Papa.parse(santaData, { header: true }).data.map(
-          (row) => row.Name
-        );
-        const probabilities = Papa.parse(santaData, { header: true }).data.map(
-          (row) => parseFloat(row.Probability)
-        );
-
-        const response = await fetch(`/${fileName}`);
-        if (!response.ok) throw new Error(`Failed to fetch ${fileName}`);
-
-        const data = await response.json();
-        const features =
-          data.type === "FeatureCollection" ? data.features : [data];
-
-        features.forEach((feature) => {
-          const sourceId = `${type}_source`;
-          const layerId = `${type}_layer`;
-
-          if (!map.getSource(sourceId)) {
-            map.addSource(sourceId, { type: "geojson", data: feature });
-          }
-          if (!map.getLayer(layerId)) {
-            map.addLayer({
-              id: layerId,
-              type: "line",
-              source: sourceId,
-              layout: { "line-join": "round", "line-cap": "round" },
-              paint: { "line-width": 6, "line-color": color },
-            });
-          }
-
-          addMarkers(feature, type, map, names, gifts, probabilities);
-        });
-      } catch (error) {
-        console.error(`Error loading ${fileName}:`, error);
-      }
-    };
 
     loadPathData("good_path.json", "#f19506", "good");
     loadPathData("bad_path.json", "#FF0000", "bad");
   }, [map, mapLoaded]);
 
-  useEffect(() => {
-    if (!map || !mapLoaded) return;
-
-    const toggleVisibility = (type, visible) => {
-      map.getStyle().layers.forEach((layer) => {
-        if (layer.id.includes(`${type}_layer`)) {
-          map.setLayoutProperty(
-            layer.id,
-            "visibility",
-            visible ? "visible" : "none"
-          );
-        }
-      });
-
-      const markers =
-        type === "good" ? goodPathMarkers.current : badPathMarkers.current;
-
-      if (visible) {
-        markers.forEach((marker) => marker.addTo(map));
-      } else {
-        markers.forEach((marker) => marker.remove());
-      }
-    };
-
-    toggleVisibility("good", showGoodPath);
-    toggleVisibility("bad", showBadPath);
-  }, [showGoodPath, showBadPath, map, mapLoaded]);
-
   return (
     <div style={{ position: "relative", width: "100%", height: "100vh" }}>
-      {/* Map */}
       <div ref={mapContainer} style={{ width: "100%", height: "100%" }} />
-
-      {/* Buttons */}
       <div
         style={{
           position: "absolute",
@@ -180,39 +259,45 @@ const EarthAnimation = () => {
           flexDirection: "column",
           gap: "10px",
           zIndex: 1000,
-          backgroundColor: "rgba(255, 255, 255, 0)",
+          backgroundColor: "rgba(255, 255, 255, 0.8)",
           padding: "10px",
           borderRadius: "10px",
           boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
         }}
       >
         <button
-          onClick={() => setShowGoodPath(!showGoodPath)}
+          onClick={() => {
+            setIsGoodPathVisible(!isGoodPathVisible);
+            toggleVisibility("good", !isGoodPathVisible);
+          }}
           style={{
             padding: "10px 20px",
             border: "none",
             borderRadius: "5px",
-            backgroundColor: showGoodPath ? "#f19506" : "#f19506",
+            backgroundColor: isGoodPathVisible ? "#f19506" : "#f19506",
             color: "white",
             cursor: "pointer",
             fontSize: "16px",
           }}
         >
-          {showGoodPath ? "Hide Good Path" : "Show Good Path"}
+          {isGoodPathVisible ? "Hide Good Path" : "Show Good Path"}
         </button>
         <button
-          onClick={() => setShowBadPath(!showBadPath)}
+          onClick={() => {
+            setIsBadPathVisible(!isBadPathVisible);
+            toggleVisibility("bad", !isBadPathVisible);
+          }}
           style={{
             padding: "10px 20px",
             border: "none",
             borderRadius: "5px",
-            backgroundColor: showBadPath ? "#FF0000" : "#FF0000",
+            backgroundColor: isBadPathVisible ? "#FF0000" : "#FF0000",
             color: "white",
             cursor: "pointer",
             fontSize: "16px",
           }}
         >
-          {showBadPath ? "Hide Bad Path" : "Show Bad Path"}
+          {isBadPathVisible ? "Hide Bad Path" : "Show Bad Path"}
         </button>
       </div>
     </div>

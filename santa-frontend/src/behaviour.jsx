@@ -43,7 +43,7 @@ const Behaviour = () => {
     <div className="behaviour-container">
       <div className="left-right-container">
         <div className="gifts-section left">
-          <h2 className="gifts-title good-title">Obedient Kids</h2>
+          <h2 className="gifts-title good-title">🎄 Obedient Kids 🎁</h2>
           <input
             type="text"
             placeholder="Search Good Gifts..."
@@ -52,33 +52,35 @@ const Behaviour = () => {
             onChange={(e) => setSearchGood(e.target.value)}
           />
           {filterGifts(goodGifts, searchGood).length > 0 ? (
-            <table className="gifts-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Country</th>
-                  <th>Gift</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filterGifts(goodGifts, searchGood).map((gift) => (
-                  <tr key={gift.id}>
-                    <td>{gift.id}</td>
-                    <td>{gift.name}</td>
-                    <td>{gift.country}</td>
-                    <td>{gift.gift}</td>
+            <div className="table-container">
+              <table className="gifts-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Country</th>
+                    <th>Gift</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filterGifts(goodGifts, searchGood).map((gift) => (
+                    <tr key={gift.id}>
+                      <td>{gift.id}</td>
+                      <td>{gift.name}</td>
+                      <td>{gift.country}</td>
+                      <td>{gift.gift}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
             <p className="no-results">No good gifts found.</p>
           )}
         </div>
 
         <div className="gifts-section right">
-          <h2 className="gifts-title bad-title">Naughty Kids</h2>
+          <h2 className="gifts-title bad-title">🎅 Naughty Kids 🎅</h2>
           <input
             type="text"
             placeholder="Search Bad Gifts..."
@@ -87,26 +89,28 @@ const Behaviour = () => {
             onChange={(e) => setSearchBad(e.target.value)}
           />
           {filterGifts(badGifts, searchBad).length > 0 ? (
-            <table className="gifts-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Country</th>
-                  <th>Gift</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filterGifts(badGifts, searchBad).map((gift) => (
-                  <tr key={gift.id}>
-                    <td>{gift.id}</td>
-                    <td>{gift.name}</td>
-                    <td>{gift.country}</td>
-                    <td>{gift.gift}</td>
+            <div className="table-container">
+              <table className="gifts-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Country</th>
+                    <th>Gift</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filterGifts(badGifts, searchBad).map((gift) => (
+                    <tr key={gift.id}>
+                      <td>{gift.id}</td>
+                      <td>{gift.name}</td>
+                      <td>{gift.country}</td>
+                      <td>{gift.gift}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
             <p className="no-results">No bad gifts found.</p>
           )}

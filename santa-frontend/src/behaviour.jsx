@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import "./global.css";
+import "./global.css"; // Ensure your global styles are imported
 
 const Behaviour = () => {
   const [goodGifts, setGoodGifts] = useState([]);
@@ -14,7 +14,7 @@ const Behaviour = () => {
         const text = await response.text();
         return text
           .split("\n")
-          .slice(1) // Skip the first line (header)
+          .slice(1)
           .map((line) => {
             const [id, name, country, gift] = line.split(",");
             return { id, name, country, gift };
@@ -24,7 +24,6 @@ const Behaviour = () => {
       const goodData = await fetchCSV("/public/good.csv");
       const badData = await fetchCSV("/public/bad.csv");
 
-      // Limit to exactly 20 children for each category
       setGoodGifts(goodData.filter((row) => row.gift).slice(0, 20));
       setBadGifts(badData.filter((row) => row.gift).slice(0, 20));
     };
@@ -47,7 +46,7 @@ const Behaviour = () => {
           <h2 className="gifts-title good-title">Obedient Kids</h2>
           <input
             type="text"
-            placeholder="Search..."
+            placeholder="Search Good Gifts..."
             className="filter-input"
             value={searchGood}
             onChange={(e) => setSearchGood(e.target.value)}
@@ -82,7 +81,7 @@ const Behaviour = () => {
           <h2 className="gifts-title bad-title">Naughty Kids</h2>
           <input
             type="text"
-            placeholder="Search..."
+            placeholder="Search Bad Gifts..."
             className="filter-input"
             value={searchBad}
             onChange={(e) => setSearchBad(e.target.value)}

@@ -1,3 +1,10 @@
+body {
+  background-color: #f0f8ff; /* Light blue background */
+  font-family: 'Arial', sans-serif; /* Use a clean font */
+  margin: 0;
+  padding: 0;
+}
+
 .behaviour-container {
   display: flex;
   justify-content: center;
@@ -13,9 +20,10 @@
 .gifts-section {
   width: 48%;
   padding: 20px;
-  background-color: #f9f9f9;
+  background-color: #fff; /* White background for sections */
   border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border: 2px solid #28a745; /* Green border for good gifts */
 }
 
 .left {
@@ -28,14 +36,15 @@
   margin-bottom: 15px;
   text-align: center; /* Center the titles */
   text-transform: uppercase; /* Optional: makes the text all uppercase */
+  color: transparent; /* Remove the gradient and set color transparent */
 }
 
 .good-title {
-  color: #28a745;
+  color: #f19506; /* Orange color for obedient kids */
 }
 
 .bad-title {
-  color: #dc3545;
+  color: #FF0000; /* Red color for naughty kids */
 }
 
 .filter-input {
@@ -45,6 +54,12 @@
   border: 1px solid #ccc;
   border-radius: 5px;
   font-size: 16px;
+  transition: border-color 0.3s;
+}
+
+.filter-input:focus {
+  border-color: #28a745; /* Green border on focus */
+  outline: none; /* Remove default outline */
 }
 
 .gifts-table {
@@ -60,12 +75,18 @@
 }
 
 .gifts-table th {
-  background-color: #f4f4f4;
+  background-color: #f4f4f4; /* Light gray for header */
+  color: #333; /* Darker text for contrast */
+}
+
+.gifts-table tr:hover {
+  background-color: #e9ffe9; /* Light green on hover */
 }
 
 .no-results {
   color: #777;
   font-style: italic;
+  text-align: center; /* Center no results message */
 }
 
 @media (max-width: 768px) {

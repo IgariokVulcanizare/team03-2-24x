@@ -6,7 +6,8 @@ import EarthAnimation from "./EarthAnimation";
 // import FilterChildren from "./FilterChildren";
 import Behaviour from "./behaviour";
 import CategorizedGifts from "./CategorizedGifts"; // Import CategorizedGifts component
-import './global.css';
+import Chinchillas from "./Chinchillas.jsx"; // Import Chinchillas component
+import './global.css'; // Global styles for the app
 
 createRoot(document.getElementById("app")).render(
   <StrictMode>
@@ -16,13 +17,13 @@ createRoot(document.getElementById("app")).render(
       <EarthAnimation />
       {/* <FilterChildren /> */}
       <Behaviour />
-      
-      {/* Add CategorizedGifts component here */}
       <CategorizedGifts />
+      
+      {/* Add Chinchillas component here */}
+      <Chinchillas />
     </div>
   </StrictMode>
 );
-
 
 
 

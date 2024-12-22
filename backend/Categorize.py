@@ -102,9 +102,14 @@ for kid, gift in kids:
         category = categorize_gift(gift)
     categorized_gifts[category].append((kid, gift))
 
-# Output results
-print("Categorized Gifts with Kids:")
-for category, items in categorized_gifts.items():
-    print(f"{category}: {len(items)} kids")
-    for kid, gift in items:
-        print(f"  - {kid} wanted: {gift}")
+# Create a new CSV and save categorized gifts to it
+with open('categorized_gifts.csv', 'w', newline='', encoding='utf-8') as csvfile:
+    fieldnames = ['Kid Name', 'Gift', 'Category']
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+    writer.writeheader()  # Write the header
+    for category, items in categorized_gifts.items():
+        for kid, gift in items:
+            writer.writerow({'Kid Name': kid, 'Gift': gift, 'Category': category})
+
+print("Categorized gifts have been saved to 'categorized_gifts.csv'")

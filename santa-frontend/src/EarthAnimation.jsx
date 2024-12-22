@@ -10,7 +10,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import santaModel from "./santa.glb";
 
 // Set your Mapbox access token
-mapboxgl.accessToken = "YOUR_MAPBOX_ACCESS_TOKEN_HERE"; // Replace with your actual Mapbox access token
+mapboxgl.accessToken = "pk.eyJ1IjoiaXZhbXB5eSIsImEiOiJjbTR5aWNteXQwc3djMmtzOHpocm94cHNrIn0.Ic3HQz_R__Oib4zwhwyA6Q"; // Replace with your actual Mapbox access token
 
 const EarthAnimation = () => {
   const mapContainer = useRef(null);
@@ -121,7 +121,12 @@ const EarthAnimation = () => {
     // Function to load path data and add as a GeoJSON layer
     const loadPathData = (map, fileName, color) => {
       fetch(`/${fileName}`)
-        .then((response) => response.json())
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
         .then((data) => {
           // Add source
           map.addSource(`${fileName}_source`, {
@@ -129,7 +134,7 @@ const EarthAnimation = () => {
             data: data,
           });
 
-          // Add line layer
+          // Add line layer with increased line-width
           map.addLayer({
             id: `${fileName}_layer`,
             type: "line",
@@ -140,38 +145,45 @@ const EarthAnimation = () => {
             },
             paint: {
               "line-color": color,
-              "line-width": 2,
+              "line-width": 6, // Increased from 2 to 6 for thicker lines
             },
           });
 
-          // Add markers for each coordinate
+          // Add markers for each coordinate with larger, custom-styled markers
           data.geometry.coordinates.forEach(([lon, lat], index) => {
-            const feature = data.properties.features
-              ? data.properties.features[index]
-              : null;
-            const name = feature
-              ? feature.name || `Kid ${index + 1}`
-              : `Kid ${index + 1}`;
-            const message = feature
-              ? feature.message ||
-                `Kid ${index + 1}: (${lat.toFixed(4)}, ${lon.toFixed(4)})`
-              : `Kid ${index + 1}: (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+            const name = `Kid ${index + 1}`;
+            const message = `Kid ${index + 1}: (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
 
-            new mapboxgl.Marker({ color: color })
+            // Create a custom HTML element for the marker
+            const el = document.createElement("div");
+            el.className = "marker";
+            el.style.backgroundColor = color;
+            el.style.width = "20px"; // Increased size
+            el.style.height = "20px"; // Increased size
+            el.style.borderRadius = "50%";
+            el.style.border = "2px solid white";
+            el.style.boxShadow = "0 0 2px rgba(0, 0, 0, 0.5)";
+
+            new mapboxgl.Marker(el)
               .setLngLat([lon, lat])
               .setPopup(new mapboxgl.Popup({ offset: 25 }).setText(message))
               .addTo(map);
           });
         })
-        .catch((error) =>
-          console.error(`Error loading ${fileName}:`, error)
-        );
+        .catch((error) => {
+          console.error(`Error loading ${fileName}:`, error);
+        });
     };
 
     // Optional: Animate Santa along the path
     const animateSantaAlongPath = (map, fileName) => {
       fetch(`/${fileName}`)
-        .then((response) => response.json())
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
         .then((data) => {
           const coordinates = data.geometry.coordinates;
           if (coordinates.length === 0) return;
@@ -195,9 +207,9 @@ const EarthAnimation = () => {
 
           moveSanta();
         })
-        .catch((error) =>
-          console.error(`Error loading ${fileName} for animation:`, error)
-        );
+        .catch((error) => {
+          console.error(`Error loading ${fileName} for animation:`, error);
+        });
     };
 
     // Add Custom Three.js Layer to Mapbox
@@ -218,17 +230,22 @@ const EarthAnimation = () => {
 
     map.on("load", addCustomLayer);
 
-    // Handle window resizing
-    window.addEventListener("resize", () => {
+    // Define the resize handler
+    const handleResize = () => {
       const canvas = map.getCanvas();
-      camera.aspect = canvas.clientWidth / canvas.clientHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-    });
+      if (camera) {
+        camera.aspect = canvas.clientWidth / canvas.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+      }
+    };
+
+    // Add the resize event listener
+    window.addEventListener("resize", handleResize);
 
     // Cleanup on component unmount
     return () => {
-      window.removeEventListener("resize", () => {});
+      window.removeEventListener("resize", handleResize);
       map.remove();
     };
   }, []);
@@ -240,5 +257,17 @@ const EarthAnimation = () => {
     ></div>
   );
 };
+
+// Optional: Add CSS for the marker in your CSS file (e.g., App.css)
+/*
+.marker {
+  background-color: #00FF00; // This will be overridden by inline styles
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+}
+*/
 
 export default EarthAnimation;

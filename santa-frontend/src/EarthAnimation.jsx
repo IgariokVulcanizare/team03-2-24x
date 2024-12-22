@@ -142,6 +142,7 @@ const EarthAnimation = () => {
                   });
                 });
               }
+              
 
               // Optionally, animate the line if needed
               // animateLine(map, layerId, duration, color);

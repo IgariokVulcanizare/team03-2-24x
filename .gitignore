@@ -31,8 +31,6 @@
 *.out
 *.app
 
-
-
 node_modules/*
 frontend/node_modules
 santa-frontend/node_modules

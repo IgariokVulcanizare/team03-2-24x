@@ -1,20 +1,42 @@
 import React from "react";
-
+import backgroundImage from "./images/background.webp";
+import Santa from "./images/santa.png";
 function Hero() {
   return (
     <div style={styles.heroContainer}>
-      <div style={styles.content}>
-        <h1 style={styles.title}>Welcome everyone</h1>
-        <p style={styles.description}>
-         Learn how to deliver gifts with Santa
-        </p>
-        <button style={styles.button}>Let's Go</button>
-      </div>
+      {/* Add the image here */}
+      <div style={styles.giftsBack}>
+      <img
+        src={backgroundImage}
+        alt="Background"
+        style={{
+          width: "100%",
+          height: "auto",
+        }}
+      /></div>
+      {/* Santa Image */}
+     <div style={styles.santaBack}> <img
+        src={Santa}
+        alt="Santa"
+        style={styles.santaImage}
+      />
+    </div>
     </div>
   );
 }
 
 const styles = {
+  giftsBack:{
+    filter: 'blur(3px)', 
+    zIndex: '-1',
+  },
+  santaBack:{
+    marginTop: '0', 
+    display: 'flex',
+    alignItems: 'right',
+    zIndex: '100',
+    height: '100vh',
+  },
   heroContainer: {
     display: "flex",
     justifyContent: "center",
@@ -25,13 +47,14 @@ const styles = {
     backgroundSize: "cover",
     backgroundPosition: "center",
   },
-  content: {
-    textAlign: "center",
-    backgroundColor: "rgba(255, 193, 193, 0.8)",
-    padding: "2rem",
-    // borderRadius: "10px",
-    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-  },
+  // content: {
+  //   textAlign: "center",
+  //   backgroundColor: "rgba(255, 193, 193, 0.8)",
+  //   padding: "2rem",
+  //   // borderRadius: "10px",
+  //   boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+    
+  // },
   title: {
     fontSize: "3rem",
     color: "#333",

@@ -1,49 +1,57 @@
 import React from 'react';
+import logo from './images/Renovo(1).png'; // Import the logo image
 
 const Navbar = () => {
+  const navBarStyle = {
+    position: 'fixed', // Makes the navbar stick to the top
+    top: '0',
+    left: '0',
+    width: '100%',
+    zIndex: '1000', // Ensures it stays above other content
+    background: '#FFDB89',
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', // Adds a subtle shadow for better visibility
+    // padding: '10px 20px',
+    display: 'flex',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  };
+
   const navItemStyle = {
     listStyle: 'none',
     display: 'inline-block',
-    margin: '0 20px',
-    fontSize: '22px',
+    margin: '0 15px',
+    fontSize: '30px',
     fontWeight: 'bold',
     textDecoration: 'none',
-    color: '#FFD700',
+    color: '#6f0e0e',
     transition: 'color 0.3s, transform 0.3s',
   };
 
-  const navItemHoverStyle = {
-    color: '#FFD700',
-    transform: 'scale(1.1)',
-  };
-
-  const handleMouseEnter = (e) => {
-    Object.assign(e.target.style, navItemHoverStyle);
-  };
-
-  const handleMouseLeave = (e) => {
-    Object.assign(e.target.style, navItemStyle);
-  };
-
   return (
-    <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px' }}>
+    <nav style={navBarStyle}>
+      {/* Logo */}
       <div>
-        <img src="./images/Renovo(1).png" alt="Logo" style={{ height: '50px', cursor: 'pointer' }} />
+        <a href="/">
+          <img
+            src={logo}
+            alt="Renovo Logo"
+            style={{ height: '80px', cursor: 'pointer' }}
+          />
+        </a>
       </div>
+
+      {/* Navigation Links */}
       <ul style={{ display: 'flex', padding: '0', margin: '0' }}>
         {['Gifts', 'Kids', 'Routes', 'Tired'].map((category, index) => (
           <li key={index} style={navItemStyle}>
-            <a
-              href={`#${category}`}
-              style={navItemStyle}
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
-            >
+            <a href={`#${category}`} style={navItemStyle}>
               {category}
             </a>
           </li>
         ))}
       </ul>
+
+
     </nav>
   );
 };

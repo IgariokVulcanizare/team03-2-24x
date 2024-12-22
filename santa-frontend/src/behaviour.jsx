@@ -42,12 +42,12 @@ const Behaviour = () => {
 
   return (
     <div className="behaviour-container">
-      <div className="gifts-section">
-        <div className="gifts-category">
+      <div className="left-right-container">
+        <div className="gifts-section left">
           <h2 className="gifts-title good-title">Obedient Kids</h2>
           <input
             type="text"
-            placeholder="Search good gifts..."
+            placeholder="Search..."
             className="filter-input"
             value={searchGood}
             onChange={(e) => setSearchGood(e.target.value)}
@@ -78,11 +78,11 @@ const Behaviour = () => {
           )}
         </div>
 
-        <div className="gifts-category">
+        <div className="gifts-section right">
           <h2 className="gifts-title bad-title">Naughty Kids</h2>
           <input
             type="text"
-            placeholder="Search bad gifts..."
+            placeholder="Search..."
             className="filter-input"
             value={searchBad}
             onChange={(e) => setSearchBad(e.target.value)}

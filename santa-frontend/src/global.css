@@ -1,113 +1,84 @@
-/* General container */
 .behaviour-container {
-  max-width: 1200px;
-  margin: 2rem auto;
-  padding: 2rem;
   display: flex;
-  gap: 2rem;
-  justify-content: space-between;
-  background: #f9f9f9;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  justify-content: center;
+  padding: 20px;
 }
 
-/* Gifts sections styling */
-.gifts-section {
+.left-right-container {
   display: flex;
   width: 100%;
   justify-content: space-between;
 }
 
-/* Each category section */
-.gifts-category {
-  flex: 1;
-  padding: 1rem;
-  background: #ffffff;
-  border-radius: 12px;
+.gifts-section {
+  width: 48%;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  text-align: center;
 }
 
-/* Titles for categories */
+.left {
+  margin-right: 2%;
+}
+
 .gifts-title {
-  font-size: 1.8rem;
-  margin-bottom: 1rem;
-  font-weight: 700;
+  font-size: 32px; /* Increased font size */
+  font-weight: bold;
+  margin-bottom: 15px;
+  text-align: center; /* Center the titles */
+  text-transform: uppercase; /* Optional: makes the text all uppercase */
 }
 
 .good-title {
-  color: #3a7d4f; /* Green for good gifts */
+  color: #28a745;
 }
 
 .bad-title {
-  color: #9b1c2b; /* Red for bad gifts */
+  color: #dc3545;
 }
 
-/* Input filtering */
 .filter-input {
-  width: 80%;
-  padding: 0.8rem;
-  margin: 1rem auto;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 1rem;
-  outline: none;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
 }
 
-.filter-input:focus {
-  border-color: #3a7d4f;
-  box-shadow: 0 4px 8px rgba(58, 125, 79, 0.2);
-}
-
-/* Table styling */
 .gifts-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 1rem;
 }
 
 .gifts-table th,
 .gifts-table td {
   padding: 12px;
-  border: 1px solid #ddd;
-  text-align: center;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
 }
 
 .gifts-table th {
-  background-color: #3a7d4f; /* Dark green for headers */
-  color: #ffffff;
-  font-weight: 700;
+  background-color: #f4f4f4;
 }
 
-.gifts-table tr:nth-child(even) {
-  background-color: #f9f9f9;
-}
-
-.gifts-table tr:nth-child(odd) {
-  background-color: #ffffff;
-}
-
-.gifts-table tr:hover {
-  background-color: #e8f5e9; /* Light green on hover */
-}
-
-/* No results styling */
 .no-results {
-  margin-top: 2rem;
-  font-size: 1.2rem;
-  color: #9b1c2b;
+  color: #777;
+  font-style: italic;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
-  .behaviour-container {
+  .left-right-container {
     flex-direction: column;
-    gap: 1rem;
   }
 
-  .gifts-category {
+  .gifts-section {
     width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .left {
+    margin-right: 0;
   }
 }

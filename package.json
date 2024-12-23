@@ -2,5 +2,8 @@
   "dependencies": {
     "mongoose": "^8.9.0",
     "papaparse": "^5.4.1"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.2.0"
   }
 }

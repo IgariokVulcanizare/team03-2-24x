@@ -1,0 +1,46 @@
+/* Container styles */
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #f0e5de, #d4c4b8); /* Soft gradient background */
+    font-family: 'Arial', sans-serif;
+  }
+  
+  /* Title styling */
+  .title {
+    margin-bottom: 20px;
+    font-size: 2.5rem; /* Slightly larger title */
+    color: #4a4a4a;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2); /* Subtle shadow effect */
+    text-align: center;
+  }
+  
+  /* Chinchilla image styles */
+  .chinchilla-image {
+    width: 500px; /* Larger image */
+    height: auto; /* Maintain aspect ratio */
+    border-radius: 15px; /* Rounded corners */
+    cursor: pointer;
+    transition: transform 0.5s ease, opacity 0.5s ease; /* Smooth transition effects */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Subtle shadow around the image */
+  }
+  
+  /* Styles for the back chinchilla */
+  .chinchilla-image.back {
+    opacity: 0.8; /* Slightly dimmed for the back image */
+  }
+  
+  /* Styles for the happy chinchilla */
+  .chinchilla-image.happy {
+    transform: scale(1.1) rotate(360deg); /* Zoom and rotate effect */
+    opacity: 1; /* Fully visible */
+  }
+  
+  /* Hover effect for additional interactivity */
+  .chinchilla-image:hover {
+    transform: scale(1.05); /* Slight zoom on hover */
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); /* Enhanced shadow on hover */
+  }
